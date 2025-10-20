@@ -1,0 +1,19 @@
+[BASIC]
+extension-pkg-whitelist = pydantic
+good-names = i, j, k, q, db
+max-args = 10
+
+[FORMAT]
+max-line-length = 79
+
+[MESSAGE CONTROL]
+c-extension-no-member,
+disable = missing-module-docstring,
+fixme,
+invalid-name,
+line-too-long,
+missing-class-docstring,
+missing-function-docstring,
+not-callable,
+too-few-public-methods,
+unused-argument,
