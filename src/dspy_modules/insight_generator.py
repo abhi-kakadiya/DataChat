@@ -1,3 +1,5 @@
+"""DSPy module for generating data insights with prompt engineering."""
+
 import dspy
 from typing import List, Optional
 import pandas as pd
@@ -119,7 +121,7 @@ class DataAnalyzer:
         for i in range(len(corr_matrix.columns)):
             for j in range(i + 1, len(corr_matrix.columns)):
                 corr_value = corr_matrix.iloc[i, j]
-                if abs(corr_value) > 0.5:
+                if abs(corr_value) > 0.5:  # Significant correlation
                     correlations.append({
                         "col1": corr_matrix.columns[i],
                         "col2": corr_matrix.columns[j],
@@ -140,6 +142,7 @@ class DataAnalyzer:
             if len(data) < 3:
                 continue
 
+            # Test for normality
             _, p_value = stats.normaltest(data) if len(data) > 8 else (0, 1)
 
             distributions.append({
@@ -149,7 +152,7 @@ class DataAnalyzer:
                 "std": float(data.std()),
                 "skewness": float(data.skew()),
                 "kurtosis": float(data.kurtosis()),
-                "is_normal": bool(p_value > 0.05),
+                "is_normal": p_value > 0.05,
                 "distribution_type": "normal" if p_value > 0.05 else "non-normal"
             })
 
@@ -195,10 +198,11 @@ class DataAnalyzer:
             if len(data) < 3:
                 continue
 
+            # Simple linear regression to detect trend
             x = np.arange(len(data))
             slope, intercept, r_value, p_value, std_err = stats.linregress(x, data)
 
-            if abs(r_value) > 0.3 and p_value < 0.05: 
+            if abs(r_value) > 0.3 and p_value < 0.05:  # Significant trend
                 trends.append({
                     "column": col,
                     "slope": float(slope),
@@ -227,17 +231,21 @@ def generate_insights(
     Returns:
         List of insight dictionaries
     """
+    # Analyze data
     analyzer = DataAnalyzer()
     analysis = analyzer.analyze_dataframe(df)
 
+    # Generate formatted analysis text
     dataset_info = _format_dataset_info(df, analysis["overview"])
-    statistical_analysis = _format_statistical_analysis(analysis)  # noqa: F841
+    statistical_analysis = _format_statistical_analysis(analysis)
 
+    # Create or use provided module
     if insight_generator is None:
         insight_generator = InsightGenerator()
 
     insights = []
 
+    # Generate insights for different aspects
     insight_aspects = [
         ("correlation", analysis["correlations"][:2]),
         ("distribution", analysis["distributions"][:2]),
@@ -266,7 +274,8 @@ def generate_insights(
                 "recommendations": prediction.recommendations,
                 "supporting_data": aspect_data if isinstance(aspect_data, list) else [aspect_data],
             })
-        except Exception:
+        except Exception as e:
+            # Skip failed insights
             continue
 
     return insights[:max_insights]

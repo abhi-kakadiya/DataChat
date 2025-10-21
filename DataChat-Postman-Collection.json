@@ -1,0 +1,942 @@
+{
+  "info": {
+    "name": "DataChat - AI-Powered Data Analysis Platform",
+    "description": "Complete API collection for DataChat - A DSPy-powered data analysis platform with natural language query capabilities.\n\n**Setup:**\n1. Import this collection into Postman\n2. Create an environment with variable `baseUrl` = `http://localhost:8000`\n3. Register a user or login to get authentication token\n4. Token will be automatically saved and used in subsequent requests\n\n**Features:**\n- JWT Authentication\n- Dataset Upload & Management\n- Natural Language Queries with DSPy\n- AI-Generated Insights\n- User Feedback System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "datachat-api"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save token to environment",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('token', jsonData.access_token);",
+                  "    pm.environment.set('tokenType', jsonData.token_type);",
+                  "    console.log('✅ Token saved to environment');",
+                  "} else {",
+                  "    console.log('❌ Registration failed');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"username\": \"testuser\",\n  \"password\": \"securepassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Register a new user account. Email and username must be unique.\n\n**Response:** Returns access token that will be automatically saved for subsequent requests."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save token to environment",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('token', jsonData.access_token);",
+                  "    pm.environment.set('tokenType', jsonData.token_type);",
+                  "    console.log('✅ Token saved to environment');",
+                  "    console.log('Token expires in 30 minutes');",
+                  "} else {",
+                  "    console.log('❌ Login failed');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"securepassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Login with email and password to receive JWT access token.\n\n**Token Expiration:** 30 minutes\n**Auto-saved:** Token is automatically saved to environment"
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints for user registration and login"
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Current User",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "me"]
+            },
+            "description": "Get current authenticated user's profile information.\n\n**Authentication Required:** Yes"
+          },
+          "response": []
+        },
+        {
+          "name": "List All Users (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/?skip=0&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", ""],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0",
+                  "description": "Number of records to skip"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Maximum records to return"
+                }
+              ]
+            },
+            "description": "List all users in the system.\n\n**Authentication Required:** Yes\n**Authorization:** Superuser only"
+          },
+          "response": []
+        }
+      ],
+      "description": "User management endpoints"
+    },
+    {
+      "name": "Datasets",
+      "item": [
+        {
+          "name": "Upload Dataset",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save dataset ID for later use",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('datasetId', jsonData.id);",
+                  "    console.log('✅ Dataset uploaded successfully');",
+                  "    console.log('Dataset ID:', jsonData.id);",
+                  "    console.log('Status:', jsonData.status);",
+                  "    console.log('Processing will continue in background...');",
+                  "} else {",
+                  "    console.log('❌ Upload failed');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "CSV or XLSX file (max 100MB)"
+                },
+                {
+                  "key": "name",
+                  "value": "Sales Data Q1 2024",
+                  "type": "text",
+                  "description": "Dataset name"
+                },
+                {
+                  "key": "description",
+                  "value": "Quarterly sales data with customer and product information",
+                  "type": "text",
+                  "description": "Dataset description"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/datasets/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "datasets", "upload"]
+            },
+            "description": "Upload a CSV or Excel file for analysis.\n\n**Supported Formats:** CSV, XLSX\n**Max File Size:** 100MB\n**Processing:** Happens in background via Celery\n\n**Note:** Dataset ID is automatically saved to environment variable `datasetId`"
+          },
+          "response": []
+        },
+        {
+          "name": "List Datasets",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/datasets/?skip=0&limit=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "datasets", ""],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            },
+            "description": "List all datasets for the current user.\n\n**Pagination:** Use skip and limit parameters"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Dataset",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Display dataset info",
+                  "if (pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    console.log('📊 Dataset:', data.name);",
+                  "    console.log('Status:', data.status);",
+                  "    console.log('Rows:', data.row_count);",
+                  "    console.log('Columns:', data.column_count);",
+                  "    ",
+                  "    if (data.status === 'ready') {",
+                  "        console.log('✅ Dataset is ready for queries!');",
+                  "    } else if (data.status === 'processing') {",
+                  "        console.log('⏳ Still processing...');",
+                  "    } else if (data.status === 'error') {",
+                  "        console.log('❌ Error:', data.error_message);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/datasets/{{datasetId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "datasets", "{{datasetId}}"]
+            },
+            "description": "Get detailed information about a specific dataset.\n\n**Status Values:**\n- `uploaded`: Just uploaded\n- `processing`: Being processed in background\n- `ready`: Ready for queries\n- `error`: Processing failed"
+          },
+          "response": []
+        },
+        {
+          "name": "Preview Dataset",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/datasets/{{datasetId}}/preview?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "datasets", "{{datasetId}}", "preview"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of rows to preview (default: 10)"
+                }
+              ]
+            },
+            "description": "Preview first N rows of the dataset.\n\n**Limit:** Max 100 rows\n**Use Case:** Quick data inspection before querying"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Dataset",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/datasets/{{datasetId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "datasets", "{{datasetId}}"]
+            },
+            "description": "Delete a dataset and all associated queries and insights.\n\n**Warning:** This action cannot be undone!"
+          },
+          "response": []
+        }
+      ],
+      "description": "Dataset management endpoints for uploading and managing CSV/Excel files"
+    },
+    {
+      "name": "Queries",
+      "item": [
+        {
+          "name": "Create Query (Execute NL Question)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save query ID and display results",
+                  "if (pm.response.code === 201) {",
+                  "    var data = pm.response.json();",
+                  "    pm.environment.set('queryId', data.id);",
+                  "    ",
+                  "    console.log('🔍 Query executed!');",
+                  "    console.log('Query ID:', data.id);",
+                  "    console.log('Status:', data.status);",
+                  "    ",
+                  "    if (data.status === 'success') {",
+                  "        console.log('✅ Success!');",
+                  "        console.log('Query Type:', data.query_type);",
+                  "        console.log('Generated SQL:', data.generated_sql);",
+                  "        console.log('Execution Time:', data.execution_time + 's');",
+                  "        console.log('Rows Returned:', data.row_count);",
+                  "        console.log('Summary:', data.result_summary);",
+                  "    } else if (data.status === 'error') {",
+                  "        console.log('❌ Error:', data.error_message);",
+                  "    }",
+                  "} else {",
+                  "    console.log('❌ Query failed');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataset_id\": \"{{datasetId}}\",\n  \"natural_language_query\": \"Show me the average sales by category\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/queries/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "queries", ""]
+            },
+            "description": "Execute a natural language query using DSPy.\n\n**Example Queries:**\n- \"Show me the average sales by category\"\n- \"Which products have the highest revenue?\"\n- \"Find all records where price > 100\"\n- \"Show me the top 10 customers by total purchases\"\n- \"What is the correlation between price and quantity?\"\n\n**DSPy Processing:**\n1. Converts NL to Pandas query\n2. Executes query on dataset\n3. Returns results with explanation\n\n**Query ID** is automatically saved for feedback/insights"
+          },
+          "response": []
+        },
+        {
+          "name": "List User Queries",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/queries/?skip=0&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "queries", ""],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "List all queries for the current user with pagination."
+          },
+          "response": []
+        },
+        {
+          "name": "List Dataset Queries",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/queries/dataset/{{datasetId}}?skip=0&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "queries", "dataset", "{{datasetId}}"],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "List all queries for a specific dataset."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Query",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/queries/{{queryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "queries", "{{queryId}}"]
+            },
+            "description": "Get detailed information about a specific query including results."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Query Feedback (Thumbs Up)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('👍 Positive feedback recorded!');",
+                  "    console.log('This will help improve DSPy models');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_feedback\": \"thumbs_up\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/queries/{{queryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "queries", "{{queryId}}"]
+            },
+            "description": "Provide positive feedback for a query.\n\n**Feedback helps:**\n- Improve DSPy prompt optimization\n- Create training examples\n- Enhance query accuracy over time"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Query Feedback (Thumbs Down)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('👎 Negative feedback recorded');",
+                  "    console.log('This helps identify areas for improvement');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_feedback\": \"thumbs_down\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/queries/{{queryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "queries", "{{queryId}}"]
+            },
+            "description": "Provide negative feedback for a query.\n\n**Values:** thumbs_up | thumbs_down | none"
+          },
+          "response": []
+        }
+      ],
+      "description": "Natural language query endpoints powered by DSPy"
+    },
+    {
+      "name": "Insights",
+      "item": [
+        {
+          "name": "Generate Dataset Insights",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Display generated insights",
+                  "if (pm.response.code === 200) {",
+                  "    var insights = pm.response.json();",
+                  "    ",
+                  "    console.log('🧠 Generated', insights.length, 'insights!');",
+                  "    ",
+                  "    insights.forEach((insight, index) => {",
+                  "        console.log('\\n--- Insight', index + 1, '---');",
+                  "        console.log('Type:', insight.insight_type);",
+                  "        console.log('Title:', insight.title);",
+                  "        console.log('Confidence:', (insight.confidence_score * 100).toFixed(1) + '%');",
+                  "        console.log('Description:', insight.description);",
+                  "    });",
+                  "    ",
+                  "    // Save first insight ID",
+                  "    if (insights.length > 0) {",
+                  "        pm.environment.set('insightId', insights[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/insights/generate/dataset/{{datasetId}}?max_insights=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "insights", "generate", "dataset", "{{datasetId}}"],
+              "query": [
+                {
+                  "key": "max_insights",
+                  "value": "5",
+                  "description": "Maximum number of insights to generate (default: 5)"
+                }
+              ]
+            },
+            "description": "Generate AI-powered insights for a dataset using DSPy.\n\n**Insight Types:**\n- Correlations between variables\n- Distribution patterns\n- Anomaly detection\n- Trend analysis\n\n**Statistical Analysis:**\n- Correlation threshold: >0.5\n- Anomaly detection: IQR method\n- Trend analysis: Linear regression\n\n**Response includes:**\n- Confidence scores (0.0 to 1.0)\n- Supporting data\n- Recommendations"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Query Insights",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/insights/generate/query/{{queryId}}?max_insights=3",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "insights", "generate", "query", "{{queryId}}"],
+              "query": [
+                {
+                  "key": "max_insights",
+                  "value": "3",
+                  "description": "Maximum insights for query context"
+                }
+              ]
+            },
+            "description": "Generate insights related to a specific query's results.\n\n**Context-aware:** Uses the query question and results for focused insights"
+          },
+          "response": []
+        },
+        {
+          "name": "List Dataset Insights",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/insights/dataset/{{datasetId}}?skip=0&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "insights", "dataset", "{{datasetId}}"],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "List all insights for a dataset, ordered by confidence score."
+          },
+          "response": []
+        },
+        {
+          "name": "List Query Insights",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/insights/query/{{queryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "insights", "query", "{{queryId}}"]
+            },
+            "description": "List all insights generated for a specific query."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Insight",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/insights/{{insightId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "insights", "{{insightId}}"]
+            },
+            "description": "Get detailed information about a specific insight."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Insight",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/insights/{{insightId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "insights", "{{insightId}}"]
+            },
+            "description": "Delete a specific insight."
+          },
+          "response": []
+        }
+      ],
+      "description": "AI-powered insight generation using DSPy and statistical analysis"
+    },
+    {
+      "name": "Health & Documentation",
+      "item": [
+        {
+          "name": "Root Endpoint",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Root endpoint with API information"
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('API is healthy', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Health check endpoint for monitoring"
+          },
+          "response": []
+        }
+      ],
+      "description": "Health check and documentation endpoints"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "// Runs before every request",
+          "",
+          "// Log current environment",
+          "console.log('🌍 Environment:', pm.environment.name || 'No environment selected');",
+          "console.log('🔗 Base URL:', pm.environment.get('baseUrl') || 'Not set');",
+          "",
+          "// Check if token exists for authenticated requests",
+          "if (pm.request.auth && pm.request.auth.type === 'bearer') {",
+          "    const token = pm.environment.get('token');",
+          "    if (!token) {",
+          "        console.warn('⚠️  No auth token found. Please login first!');",
+          "    }",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "// Runs after every request",
+          "",
+          "// Log response time",
+          "console.log('⏱️  Response time:', pm.response.responseTime + 'ms');",
+          "",
+          "// Check for common errors",
+          "if (pm.response.code === 401) {",
+          "    console.error('🔒 Unauthorized! Token may be expired. Please login again.');",
+          "} else if (pm.response.code === 403) {",
+          "    console.error('🚫 Forbidden! Insufficient permissions.');",
+          "} else if (pm.response.code === 404) {",
+          "    console.error('❓ Not found! Check the resource ID.');",
+          "} else if (pm.response.code >= 500) {",
+          "    console.error('💥 Server error! Check backend logs.');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ]
+}

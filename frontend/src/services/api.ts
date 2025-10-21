@@ -1,8 +1,8 @@
-import axios, { AxiosInstance } from "axios";
+import axios from "axios";
+import type { AxiosInstance } from "axios";
 import type { User, Dataset, Query, Insight, LoginRequest, RegisterRequest, AuthResponse } from "../types";
 
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 class ApiClient {
   private client: AxiosInstance;

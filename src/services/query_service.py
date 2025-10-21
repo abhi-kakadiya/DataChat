@@ -10,8 +10,8 @@ from sqlalchemy import select
 from src.models.query import Query
 from src.models.dataset import Dataset
 from src.schemas.query import QueryCreate
-from src.dspy_modules.config import configure_dspy, is_dspy_configured
-from src.dspy_modules.nl_to_sql import generate_sql_query, NLToSQL
+from src.dspy_modules import configure_dspy, generate_sql_query
+from src.dspy_modules.nl_to_sql import NLToSQL
 from src.services.dataset_service import DatasetService, sanitize_for_postgres_json
 
 logger = logging.getLogger(__name__)
@@ -25,22 +25,14 @@ class QueryService:
         self.dataset_service = DatasetService()
         self.nl_to_sql_module: Optional[NLToSQL] = None
 
+        # Configure DSPy on initialization
         try:
-            logger.info("Initializing QueryService...")
-            
             configure_dspy()
-            
-            if not is_dspy_configured():
-                raise RuntimeError("DSPy configuration verification failed")
-            
             self.nl_to_sql_module = NLToSQL()
-            
-            logger.info("QueryService initialized successfully with NLToSQL module")
-            
+            logger.info("DSPy configured successfully for QueryService")
         except Exception as e:
-            logger.error(f"Failed to initialize QueryService: {e}", exc_info=True)
+            logger.error(f"Failed to configure DSPy: {e}")
             self.nl_to_sql_module = None
-            raise RuntimeError(f"QueryService initialization failed: {e}") from e
 
     async def create_and_execute_query(
         self,
@@ -58,13 +50,8 @@ class QueryService:
         Returns:
             Created Query object with results
         """
+        # Create query record
         import uuid
-        
-        if self.nl_to_sql_module is None:
-            raise RuntimeError(
-                "NLToSQL module not initialized. QueryService may have failed to initialize properly."
-            )
-        
         query = Query(
             id=str(uuid.uuid4()),
             user_id=user_id,
@@ -76,9 +63,8 @@ class QueryService:
         db.commit()
         db.refresh(query)
 
-        logger.info(f"Created query {query.id} for dataset {query_data.dataset_id}")
-
         try:
+            # Get dataset
             dataset = db.execute(
                 select(Dataset).where(Dataset.id == query_data.dataset_id)
             ).scalar_one_or_none()
@@ -89,23 +75,20 @@ class QueryService:
             if dataset.status != "ready":
                 raise ValueError(f"Dataset is not ready (status: {dataset.status})")
 
-            logger.info(f"Loading data for dataset {dataset.id}")
+            # Load dataset as DataFrame
             df = await self.dataset_service.get_dataset_data(dataset)
-            logger.info(f"Loaded {len(df)} rows, {len(df.columns)} columns")
 
+            # Execute query using DSPy
             start_time = time.time()
-            logger.info(f"Generating SQL for query: {query_data.natural_language_query}")
-            
             result = generate_sql_query(
                 df=df,
                 natural_language_query=query_data.natural_language_query,
                 nl_to_sql_module=self.nl_to_sql_module
             )
-            
             execution_time = time.time() - start_time
 
             if not result["success"]:
-                logger.warning(f"Query execution failed: {result['error']}")
+                # Query generation/execution failed
                 query.status = "error"
                 query.error_message = result["error"]
                 query.generated_sql = result["sql_query"]
@@ -114,9 +97,11 @@ class QueryService:
                 db.refresh(query)
                 return query
 
+            # Process results
             result_df = result["result"]
             result_data = self._dataframe_to_json(result_df)
 
+            # Update query with results
             query.generated_sql = result["sql_query"]
             query.query_type = result["query_type"]
             query.result_data = sanitize_for_postgres_json(result_data)
@@ -136,7 +121,7 @@ class QueryService:
             return query
 
         except Exception as e:
-            logger.error(f"Query execution failed for {query.id}: {e}", exc_info=True)
+            logger.error(f"Query execution failed: {e}", exc_info=True)
             query.status = "error"
             query.error_message = str(e)
             db.commit()
@@ -191,6 +176,7 @@ class QueryService:
         Returns:
             List of Query objects
         """
+        # Verify dataset belongs to user
         dataset = db.execute(
             select(Dataset).where(
                 Dataset.id == dataset_id,
@@ -276,10 +262,11 @@ class QueryService:
         Returns:
             List of dictionaries
         """
+        # Limit result size
         max_rows = 1000
         if len(df) > max_rows:
-            logger.info(f"Truncating result from {len(df)} to {max_rows} rows")
             df = df.head(max_rows)
 
+        # Convert to dict, handling NaN/Inf values
         result = df.to_dict(orient="records")
         return result

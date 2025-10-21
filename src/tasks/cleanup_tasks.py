@@ -1,3 +1,5 @@
+"""Background tasks for data cleanup and maintenance."""
+
 import logging
 from datetime import datetime, timedelta
 
@@ -7,12 +9,12 @@ from src.core.storage import storage_manager
 from src.models.dataset import Dataset
 from src.models.query import Query
 from src.models.insight import Insight
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(name="src.tasks.cleanup_tasks.cleanup_old_files")
+@celery_app.task(name="app.tasks.data_processing.cleanup_old_files")
 def cleanup_old_files():
     """
     Clean up old files and data.
@@ -34,6 +36,7 @@ def cleanup_old_files():
             "orphaned_insights_cleaned": 0
         }
 
+        # 1. Clean up failed datasets older than 7 days
         cutoff_date = datetime.utcnow() - timedelta(days=7)
         failed_datasets = db.execute(
             select(Dataset).where(
@@ -44,10 +47,12 @@ def cleanup_old_files():
 
         for dataset in failed_datasets:
             try:
+                # Delete file from storage
                 if dataset.file_path:
                     storage_manager.delete_file(dataset.file_path)
                     stats["files_deleted"] += 1
 
+                # Delete database record
                 db.delete(dataset)
                 stats["datasets_deleted"] += 1
 
@@ -56,19 +61,22 @@ def cleanup_old_files():
                 logger.error(f"Failed to delete dataset {dataset.id}: {e}")
                 continue
 
-        query_cutoff_date = datetime.now() - timedelta(days=30)
+        # 2. Clean up old query results (>30 days)
+        query_cutoff_date = datetime.utcnow() - timedelta(days=30)
         old_queries = db.execute(
             select(Query).where(Query.created_at < query_cutoff_date)
         ).scalars().all()
 
         for query in old_queries:
             try:
+                # Clear large result_data field but keep the query record
                 query.result_data = None
                 stats["old_queries_cleaned"] += 1
             except Exception as e:
                 logger.error(f"Failed to clean query {query.id}: {e}")
                 continue
 
+        # 3. Clean up orphaned insights (where dataset was deleted)
         orphaned_insights = db.execute(
             select(Insight)
             .where(~Insight.dataset_id.in_(select(Dataset.id)))
@@ -82,6 +90,7 @@ def cleanup_old_files():
                 logger.error(f"Failed to delete orphaned insight {insight.id}: {e}")
                 continue
 
+        # Commit all changes
         db.commit()
 
         logger.info(
@@ -101,7 +110,7 @@ def cleanup_old_files():
         db.close()
 
 
-@celery_app.task(name="src.tasks.cleanup_tasks.vacuum_database")
+@celery_app.task(name="app.tasks.data_processing.vacuum_database")
 def vacuum_database():
     """
     Perform database maintenance (PostgreSQL VACUUM).
@@ -112,6 +121,7 @@ def vacuum_database():
 
     db = SessionLocal()
     try:
+        # PostgreSQL VACUUM cannot run inside a transaction
         db.connection().connection.set_isolation_level(0)
         db.execute("VACUUM ANALYZE")
         logger.info("Database vacuum completed successfully")

@@ -1,10 +1,11 @@
-from typing import Any
+"""Query API endpoints for natural language data analysis."""
+
+from typing import Any, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from src.api.deps import get_current_active_user
-from src.core.database import get_sync_session 
+from src.api.deps import get_sync_session, get_current_active_user
 from src.models.user import User
 from src.schemas.query import (
     Query as QuerySchema,
@@ -15,6 +16,45 @@ from src.schemas.query import (
 from src.services.query_service import QueryService
 
 router = APIRouter()
+
+
+def determine_visualization_type(query_obj: Any) -> str:
+    """Determine visualization type based on query characteristics."""
+    # If query failed, return table
+    if query_obj.status != "success" or not query_obj.result_data:
+        return "table"
+
+    # Single value result
+    if query_obj.row_count == 1 and len(query_obj.result_data[0]) == 1:
+        return "number"
+
+    # Check query type and structure
+    query_type = (query_obj.query_type or "").lower()
+    query_text = (query_obj.natural_language_query or "").lower()
+
+    # Time series detection
+    time_keywords = ["trend", "over time", "timeline", "history", "daily", "monthly", "yearly"]
+    if any(keyword in query_text for keyword in time_keywords):
+        return "line_chart"
+
+    # Distribution/percentage detection
+    dist_keywords = ["distribution", "percentage", "breakdown", "proportion", "share"]
+    if any(keyword in query_text for keyword in dist_keywords):
+        return "pie_chart"
+
+    # Aggregation/comparison detection
+    agg_keywords = ["group", "average", "sum", "count", "total", "top", "bottom", "highest", "lowest"]
+    if any(keyword in query_text for keyword in agg_keywords) or "aggregation" in query_type or "grouping" in query_type:
+        return "bar_chart"
+
+    # Check result structure - if has 2-3 columns with one numeric, likely bar chart
+    if query_obj.result_data and len(query_obj.result_data) > 0:
+        first_row = query_obj.result_data[0]
+        if 2 <= len(first_row) <= 3:
+            return "bar_chart"
+
+    # Default to table for complex data
+    return "table"
 
 
 @router.post("/", response_model=QuerySchema, status_code=status.HTTP_201_CREATED)
@@ -40,7 +80,28 @@ async def create_query(
             query_data=query_in,
             user_id=str(current_user.id)
         )
-        return query
+
+        # Convert to schema and add visualization type
+        query_dict = {
+            "id": query.id,
+            "user_id": query.user_id,
+            "dataset_id": query.dataset_id,
+            "natural_language_query": query.natural_language_query,
+            "generated_sql": query.generated_sql,
+            "query_type": query.query_type,
+            "result_data": query.result_data,
+            "result_summary": query.result_summary,
+            "execution_time": query.execution_time,
+            "row_count": query.row_count,
+            "status": query.status,
+            "error_message": query.error_message,
+            "user_feedback": query.user_feedback,
+            "created_at": query.created_at,
+            "updated_at": query.updated_at,
+            "visualization_type": determine_visualization_type(query)
+        }
+
+        return QuerySchema(**query_dict)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -150,7 +211,27 @@ def get_query(
             detail="Query not found"
         )
 
-    return query
+    # Add visualization type to response
+    query_dict = {
+        "id": query.id,
+        "user_id": query.user_id,
+        "dataset_id": query.dataset_id,
+        "natural_language_query": query.natural_language_query,
+        "generated_sql": query.generated_sql,
+        "query_type": query.query_type,
+        "result_data": query.result_data,
+        "result_summary": query.result_summary,
+        "execution_time": query.execution_time,
+        "row_count": query.row_count,
+        "status": query.status,
+        "error_message": query.error_message,
+        "user_feedback": query.user_feedback,
+        "created_at": query.created_at,
+        "updated_at": query.updated_at,
+        "visualization_type": determine_visualization_type(query)
+    }
+
+    return QuerySchema(**query_dict)
 
 
 @router.patch("/{query_id}", response_model=QuerySchema)
