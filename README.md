@@ -603,7 +603,7 @@ MIT License - Graduate project for educational purposes.
 
 **Graduate Student Project**
 **Topic:** Prompt Engineering for Numerical Datasets using DSPy
-**Institution:** [Your University]
+**Institution:** McMaster University
 **Year:** 2025
 
 ---
