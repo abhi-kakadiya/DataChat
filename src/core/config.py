@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     )
     
     PROJECT_NAME: str = Field(default="DSPy Prompt Engineer", description="Project name")
-    DEBUG: bool = Field(default=False, description="Debug mode")
+    DEBUG: bool = Field(default=True, description="Debug mode")
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")
     API_V1_STR: str = Field(default="/api/v1", description="API version prefix")
     

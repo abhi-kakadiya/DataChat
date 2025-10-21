@@ -1,42 +1,19 @@
-import logging
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
+from src.api.app import api_router
 from src.core.config import get_settings
+from src.core.logging import get_logger
 
+logger = get_logger(__name__)
 settings = get_settings()
-
-logging.basicConfig(
-    level=getattr(logging, settings.LOG_LEVEL.upper()),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application lifespan manager."""
-    logger.info("Starting up DSPy Prompt Engineer API...")
-
-    # async with async_engine.begin() as conn:
-    #     await conn.run_sync(Base.metadata.create_all)
-
-    logger.info("Database tables created successfully")
-
-    yield
-
-    logger.info("Shutting down DSPy Prompt Engineer API...")
-
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="Production-level prompt engineering application for numerical datasets using DSPy",
-    version="0.1.0",
+    description="Prompt engineering application for numerical datasets using DSPy",
+    version="1.0.0",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -52,7 +29,7 @@ app.add_middleware(
     allowed_hosts=["*"],
 )
 
-# app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")
@@ -75,9 +52,10 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "app.main:app",
+        "main:app",
         host="0.0.0.0",
         port=8000,
-        reload=settings.DEBUG,
+        reload=True,
         log_level=settings.LOG_LEVEL.lower(),
+        workers=1,
     )
