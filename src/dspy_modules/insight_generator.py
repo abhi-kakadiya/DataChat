@@ -149,7 +149,7 @@ class DataAnalyzer:
                 "std": float(data.std()),
                 "skewness": float(data.skew()),
                 "kurtosis": float(data.kurtosis()),
-                "is_normal": p_value > 0.05,
+                "is_normal": bool(p_value > 0.05),
                 "distribution_type": "normal" if p_value > 0.05 else "non-normal"
             })
 

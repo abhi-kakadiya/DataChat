@@ -1,7 +1,9 @@
 import dspy
 from typing import Optional
 import pandas as pd
+import logging
 
+logger = logging.getLogger(__name__)
 
 class NLToSQLSignature(dspy.Signature):
     """Signature for converting natural language queries to SQL.
@@ -36,6 +38,11 @@ class NLToSQL(dspy.Module):
 
     def __init__(self):
         super().__init__()
+        if dspy.settings.lm is None:
+            raise RuntimeError(
+                "DSPy language model not configured. "
+                "Call configure_dspy() before creating NLToSQL instance."
+            )
         self.generate_query = dspy.ChainOfThought(NLToSQLSignature)
 
     def forward(self, schema_info: str, natural_language_query: str):
@@ -48,6 +55,9 @@ class NLToSQL(dspy.Module):
         Returns:
             DSPy Prediction with query_type, sql_query, and explanation
         """
+        if dspy.settings.lm is None:
+            raise RuntimeError("DSPy language model not available")
+            
         prediction = self.generate_query(
             schema_info=schema_info,
             natural_language_query=natural_language_query
@@ -73,7 +83,8 @@ class DataFrameQueryExecutor:
             if any(op in query.lower() for op in ['select', 'where', 'group by', 'order by']):
                 result = DataFrameQueryExecutor._sql_to_pandas(df, query)
             else:
-                result = eval(query, {"df": df, "pd": pd})
+                import numpy as np
+                result = eval(query, {"df": df, "pd": pd, "np": np})
 
             if not isinstance(result, pd.DataFrame):
                 if isinstance(result, pd.Series):
@@ -137,17 +148,29 @@ def generate_sql_query(
     Returns:
         Dictionary with query details and results
     """
+    if dspy.settings.lm is None:
+        logger.error("DSPy LM not configured when generate_sql_query was called")
+        raise RuntimeError(
+            "DSPy language model not configured. "
+            "Ensure configure_dspy() is called before using this function."
+        )
+    
+    logger.info(f"DSPy LM configured: {type(dspy.settings.lm).__name__}")
+    
     schema_info = _generate_schema_info(df)
 
     if nl_to_sql_module is None:
+        logger.info("Creating new NLToSQL module")
         nl_to_sql_module = NLToSQL()
-
-    prediction = nl_to_sql_module.forward(
-        schema_info=schema_info,
-        natural_language_query=natural_language_query
-    )
+    else:
+        logger.info("Using provided NLToSQL module")
 
     try:
+        prediction = nl_to_sql_module.forward(
+            schema_info=schema_info,
+            natural_language_query=natural_language_query
+        )
+
         executor = DataFrameQueryExecutor()
         result_df = executor.execute_query(df, prediction.sql_query)
 
@@ -160,14 +183,19 @@ def generate_sql_query(
             "error": None
         }
     except Exception as e:
-        return {
-            "query_type": prediction.query_type,
-            "sql_query": prediction.sql_query,
-            "explanation": prediction.explanation,
+        logger.error(f"Query generation or execution failed: {e}", exc_info=True)
+        
+        # Return error info even if prediction partially succeeded
+        error_response = {
+            "query_type": getattr(prediction, 'query_type', 'unknown') if 'prediction' in locals() else 'unknown',
+            "sql_query": getattr(prediction, 'sql_query', '') if 'prediction' in locals() else '',
+            "explanation": getattr(prediction, 'explanation', '') if 'prediction' in locals() else '',
             "result": None,
             "success": False,
             "error": str(e)
         }
+        
+        return error_response
 
 
 def _generate_schema_info(df: pd.DataFrame) -> str:

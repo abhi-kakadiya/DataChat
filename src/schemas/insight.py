@@ -1,34 +1,29 @@
-from datetime import datetime
-from typing import Any, Optional
-
+from typing import Optional, List, Dict, Any, Union
 from pydantic import BaseModel, Field
+from datetime import datetime
 
 
 class InsightBase(BaseModel):
-    insight_type: str = Field(..., min_length=1)
-    title: str = Field(..., min_length=1, max_length=200)
-    description: str = Field(..., min_length=1)
-    confidence_score: Optional[float] = Field(None, ge=0.0, le=1.0)
+    """Base schema for Insight."""
+    dataset_id: str
+    query_id: Optional[str] = None
+    insight_type: str
+    title: str = Field(..., max_length=200)
+    description: str
+    confidence_score: float = Field(..., ge=0.0, le=1.0)
+    # Accept both dict and list formats
+    supporting_data: Union[Dict[str, Any], List[Dict[str, Any]], List[Any]] = Field(default_factory=dict)
+    visualization_config: Dict[str, Any] = Field(default_factory=dict)
 
 
 class InsightCreate(InsightBase):
-    dataset_id: str
-    query_id: Optional[str] = None
-    supporting_data: Optional[dict[str, Any]] = None
-    visualization_config: Optional[dict[str, Any]] = None
-
-
-class InsightUpdate(BaseModel):
-    title: Optional[str] = Field(None, min_length=1, max_length=200)
-    description: Optional[str] = Field(None, min_length=1)
+    """Schema for creating an insight."""
+    pass
 
 
 class Insight(InsightBase):
+    """Schema for Insight response."""
     id: str
-    dataset_id: str
-    query_id: Optional[str] = None
-    supporting_data: Optional[dict[str, Any]] = None
-    visualization_config: Optional[dict[str, Any]] = None
     created_at: datetime
 
     class Config:
@@ -36,7 +31,8 @@ class Insight(InsightBase):
 
 
 class InsightListResponse(BaseModel):
-    insights: list[Insight]
+    """Schema for paginated insight list response."""
+    insights: List[Insight]
     total: int
     page: int
     page_size: int

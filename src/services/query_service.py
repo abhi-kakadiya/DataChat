@@ -10,8 +10,8 @@ from sqlalchemy import select
 from src.models.query import Query
 from src.models.dataset import Dataset
 from src.schemas.query import QueryCreate
-from src.dspy_modules import configure_dspy, generate_sql_query
-from src.dspy_modules.nl_to_sql import NLToSQL
+from src.dspy_modules.config import configure_dspy, is_dspy_configured
+from src.dspy_modules.nl_to_sql import generate_sql_query, NLToSQL
 from src.services.dataset_service import DatasetService, sanitize_for_postgres_json
 
 logger = logging.getLogger(__name__)
@@ -26,12 +26,21 @@ class QueryService:
         self.nl_to_sql_module: Optional[NLToSQL] = None
 
         try:
+            logger.info("Initializing QueryService...")
+            
             configure_dspy()
+            
+            if not is_dspy_configured():
+                raise RuntimeError("DSPy configuration verification failed")
+            
             self.nl_to_sql_module = NLToSQL()
-            logger.info("DSPy configured successfully for QueryService")
+            
+            logger.info("QueryService initialized successfully with NLToSQL module")
+            
         except Exception as e:
-            logger.error(f"Failed to configure DSPy: {e}")
+            logger.error(f"Failed to initialize QueryService: {e}", exc_info=True)
             self.nl_to_sql_module = None
+            raise RuntimeError(f"QueryService initialization failed: {e}") from e
 
     async def create_and_execute_query(
         self,
@@ -50,6 +59,12 @@ class QueryService:
             Created Query object with results
         """
         import uuid
+        
+        if self.nl_to_sql_module is None:
+            raise RuntimeError(
+                "NLToSQL module not initialized. QueryService may have failed to initialize properly."
+            )
+        
         query = Query(
             id=str(uuid.uuid4()),
             user_id=user_id,
@@ -60,6 +75,8 @@ class QueryService:
         db.add(query)
         db.commit()
         db.refresh(query)
+
+        logger.info(f"Created query {query.id} for dataset {query_data.dataset_id}")
 
         try:
             dataset = db.execute(
@@ -72,17 +89,23 @@ class QueryService:
             if dataset.status != "ready":
                 raise ValueError(f"Dataset is not ready (status: {dataset.status})")
 
+            logger.info(f"Loading data for dataset {dataset.id}")
             df = await self.dataset_service.get_dataset_data(dataset)
+            logger.info(f"Loaded {len(df)} rows, {len(df.columns)} columns")
 
             start_time = time.time()
+            logger.info(f"Generating SQL for query: {query_data.natural_language_query}")
+            
             result = generate_sql_query(
                 df=df,
                 natural_language_query=query_data.natural_language_query,
                 nl_to_sql_module=self.nl_to_sql_module
             )
+            
             execution_time = time.time() - start_time
 
             if not result["success"]:
+                logger.warning(f"Query execution failed: {result['error']}")
                 query.status = "error"
                 query.error_message = result["error"]
                 query.generated_sql = result["sql_query"]
@@ -113,7 +136,7 @@ class QueryService:
             return query
 
         except Exception as e:
-            logger.error(f"Query execution failed: {e}", exc_info=True)
+            logger.error(f"Query execution failed for {query.id}: {e}", exc_info=True)
             query.status = "error"
             query.error_message = str(e)
             db.commit()
@@ -255,6 +278,7 @@ class QueryService:
         """
         max_rows = 1000
         if len(df) > max_rows:
+            logger.info(f"Truncating result from {len(df)} to {max_rows} rows")
             df = df.head(max_rows)
 
         result = df.to_dict(orient="records")
