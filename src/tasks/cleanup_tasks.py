@@ -14,7 +14,7 @@ from sqlalchemy import select, delete
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(name="app.tasks.data_processing.cleanup_old_files")
+@celery_app.task(name="src.tasks.data_processing.cleanup_old_files")
 def cleanup_old_files():
     """
     Clean up old files and data.
@@ -110,7 +110,7 @@ def cleanup_old_files():
         db.close()
 
 
-@celery_app.task(name="app.tasks.data_processing.vacuum_database")
+@celery_app.task(name="src.tasks.data_processing.vacuum_database")
 def vacuum_database():
     """
     Perform database maintenance (PostgreSQL VACUUM).

@@ -12,7 +12,7 @@ from sqlalchemy import select
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(name="app.tasks.insights.generate_background_insights")
+@celery_app.task(name="src.tasks.insights.generate_background_insights")
 def generate_background_insights():
     """
     Background task to generate insights for datasets that don't have recent insights.

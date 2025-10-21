@@ -1,5 +1,3 @@
-"""Service for generating data insights using DSPy."""
-
 import logging
 from typing import Optional, List
 from sqlalchemy.orm import Session

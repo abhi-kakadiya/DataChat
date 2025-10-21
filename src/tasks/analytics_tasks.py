@@ -13,7 +13,7 @@ from sqlalchemy import select, func
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(name="app.tasks.analytics.update_dspy_models")
+@celery_app.task(name="src.tasks.analytics.update_dspy_models")
 def update_dspy_models():
     """
     Update and optimize DSPy modules using collected user feedback.
@@ -103,7 +103,7 @@ def update_dspy_models():
         db.close()
 
 
-@celery_app.task(name="app.tasks.analytics.generate_usage_stats")
+@celery_app.task(name="src.tasks.analytics.generate_usage_stats")
 def generate_usage_stats():
     """
     Generate usage statistics and analytics.

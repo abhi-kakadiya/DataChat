@@ -1,5 +1,3 @@
-"""Enhanced service for processing natural language queries with context awareness."""
-
 import logging
 import time
 from typing import Optional, List
