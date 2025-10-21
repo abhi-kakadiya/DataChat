@@ -27,6 +27,9 @@ class NLToSQLSignature(dspy.Signature):
     explanation: str = dspy.OutputField(
         desc="Brief explanation of what the query does and how it answers the question"
     )
+    visualization_type: str = dspy.OutputField(
+        desc="Recommended visualization: bar_chart (for comparisons/aggregations), line_chart (for time series/trends), pie_chart (for distributions/percentages), number (for single values), or table (for complex/detailed data)"
+    )
 
 
 class NLToSQL(dspy.Module):
@@ -171,6 +174,7 @@ def generate_sql_query(
             "query_type": prediction.query_type,
             "sql_query": prediction.sql_query,
             "explanation": prediction.explanation,
+            "visualization_type": prediction.visualization_type,
             "result": result_df,
             "success": True,
             "error": None
@@ -180,6 +184,7 @@ def generate_sql_query(
             "query_type": prediction.query_type,
             "sql_query": prediction.sql_query,
             "explanation": prediction.explanation,
+            "visualization_type": getattr(prediction, "visualization_type", "table"),
             "result": None,
             "success": False,
             "error": str(e)

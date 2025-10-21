@@ -36,6 +36,7 @@ export interface Query {
   error_message?: string;
   user_feedback?: "thumbs_up" | "thumbs_down" | "none";
   created_at: string;
+  visualization_type?: "bar_chart" | "line_chart" | "pie_chart" | "number" | "table";
 }
 
 export interface Insight {

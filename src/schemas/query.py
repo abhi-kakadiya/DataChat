@@ -50,6 +50,8 @@ class Query(QueryBase):
     user_feedback: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
+    # Metadata for frontend visualization (not stored in DB)
+    visualization_type: Optional[str] = None
 
     class Config:
         from_attributes = True
