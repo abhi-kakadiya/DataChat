@@ -293,7 +293,10 @@ export default function DashboardPage() {
                     DataChat Dashboard
                   </h1>
                   <p className="text-sm text-gray-600 mt-1">
-                    Welcome back, <span className="font-semibold">{user?.username || user?.email}</span>
+                    Welcome back,{" "}
+                    <span className="font-semibold">
+                      {user?.username || user?.email}
+                    </span>
                   </p>
                 </div>
               </motion.div>
@@ -309,7 +312,9 @@ export default function DashboardPage() {
                 className="group hover:border-red-300 hover:bg-red-50 transition-all"
               >
                 <LogOut className="w-4 h-4 mr-2 group-hover:text-red-600 transition-colors" />
-                <span className="group-hover:text-red-600 transition-colors">Logout</span>
+                <span className="group-hover:text-red-600 transition-colors">
+                  Logout
+                </span>
               </Button>
             </motion.div>
           </div>
@@ -336,8 +341,13 @@ export default function DashboardPage() {
               <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative bg-white rounded-2xl p-6 border border-gray-100 shadow-sm group-hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
-                  <div className={`w-12 h-12 ${stat.bgColor} rounded-xl flex items-center justify-center`}>
-                    <stat.icon className={`w-6 h-6 bg-gradient-to-br ${stat.color} bg-clip-text text-transparent`} style={{ WebkitTextFillColor: 'transparent' }} />
+                  <div
+                    className={`w-12 h-12 ${stat.bgColor} rounded-xl flex items-center justify-center`}
+                  >
+                    <stat.icon
+                      className={`w-6 h-6 bg-gradient-to-br ${stat.color} bg-clip-text text-transparent`}
+                      style={{ WebkitTextFillColor: "transparent" }}
+                    />
                   </div>
                   <motion.div
                     animate={{
@@ -351,8 +361,12 @@ export default function DashboardPage() {
                     className={`w-2 h-2 rounded-full bg-gradient-to-br ${stat.color}`}
                   ></motion.div>
                 </div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</h3>
-                <p className="text-sm text-gray-600 font-medium">{stat.label}</p>
+                <h3 className="text-3xl font-bold text-gray-900 mb-1">
+                  {stat.value}
+                </h3>
+                <p className="text-sm text-gray-600 font-medium">
+                  {stat.label}
+                </p>
               </div>
             </motion.div>
           ))}
@@ -373,8 +387,12 @@ export default function DashboardPage() {
                   <Upload className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Upload Dataset</h2>
-                  <p className="text-sm text-gray-600">Upload a CSV or XLSX file to start analyzing</p>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Upload Dataset
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Upload a CSV or XLSX file to start analyzing
+                  </p>
                 </div>
               </div>
 
@@ -385,7 +403,9 @@ export default function DashboardPage() {
                   className="mb-6 bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start space-x-3"
                 >
                   <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-700 font-medium">{uploadError}</p>
+                  <p className="text-sm text-red-700 font-medium">
+                    {uploadError}
+                  </p>
                 </motion.div>
               )}
 
@@ -423,13 +443,18 @@ export default function DashboardPage() {
                         <FileSpreadsheet className="w-8 h-8 text-green-600" />
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="font-semibold text-gray-900">{selectedFile.name}</p>
-                        <p className="text-sm text-gray-600">{formatFileSize(selectedFile.size)}</p>
+                        <p className="font-semibold text-gray-900">
+                          {selectedFile.name}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {formatFileSize(selectedFile.size)}
+                        </p>
                       </div>
                       <button
                         onClick={() => {
                           setSelectedFile(null);
-                          if (fileInputRef.current) fileInputRef.current.value = "";
+                          if (fileInputRef.current)
+                            fileInputRef.current.value = "";
                         }}
                         className="p-2 hover:bg-red-100 rounded-lg transition-colors"
                       >
@@ -452,7 +477,9 @@ export default function DashboardPage() {
                         <Upload className="w-8 h-8 text-blue-600" />
                       </motion.div>
                       <p className="text-gray-900 font-semibold mb-2">
-                        {isDragging ? "Drop your file here" : "Drag and drop your file here"}
+                        {isDragging
+                          ? "Drop your file here"
+                          : "Drag and drop your file here"}
                       </p>
                       <p className="text-sm text-gray-600 mb-4">or</p>
                       <Button
@@ -463,7 +490,9 @@ export default function DashboardPage() {
                         <FileText className="w-4 h-4 mr-2" />
                         Browse Files
                       </Button>
-                      <p className="text-xs text-gray-500 mt-4">Supports CSV and XLSX files</p>
+                      <p className="text-xs text-gray-500 mt-4">
+                        Supports CSV and XLSX files
+                      </p>
                     </>
                   )}
                 </div>
@@ -507,16 +536,18 @@ export default function DashboardPage() {
                   <Button
                     onClick={handleUpload}
                     disabled={!selectedFile || isUploading}
-                    className="w-full h-12 bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 hover:from-blue-600 hover:via-purple-700 hover:to-pink-700 text-white font-semibold shadow-lg"
+                    variant="primary"
+                    size="lg"
+                    className="w-full"
                   >
                     {isUploading ? (
                       <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                         Uploading...
                       </>
                     ) : (
                       <>
-                        <Upload className="mr-2 h-5 w-5" />
+                        <Upload className="w-4 h-4" />
                         Upload Dataset
                       </>
                     )}
@@ -539,8 +570,12 @@ export default function DashboardPage() {
                 <Database className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Your Datasets</h2>
-                <p className="text-sm text-gray-600">Click on a dataset to start querying</p>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Your Datasets
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Click on a dataset to start querying
+                </p>
               </div>
             </div>
 
@@ -638,7 +673,9 @@ export default function DashboardPage() {
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.3, delay: index * 0.05 }}
                       whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                      onClick={() => handleDatasetClick(dataset.id, dataset.status)}
+                      onClick={() =>
+                        handleDatasetClick(dataset.id, dataset.status)
+                      }
                       className={`relative group ${
                         isReady ? "cursor-pointer" : ""
                       }`}
@@ -655,10 +692,14 @@ export default function DashboardPage() {
                           >
                             <StatusIcon
                               className={`w-4 h-4 ${statusConfig.color} ${
-                                dataset.status === "processing" ? "animate-spin" : ""
+                                dataset.status === "processing"
+                                  ? "animate-spin"
+                                  : ""
                               }`}
                             />
-                            <span className={`text-xs font-semibold ${statusConfig.color}`}>
+                            <span
+                              className={`text-xs font-semibold ${statusConfig.color}`}
+                            >
                               {statusConfig.label}
                             </span>
                           </div>
@@ -689,7 +730,9 @@ export default function DashboardPage() {
                               </p>
                             </div>
                             <div className="bg-gray-50 rounded-lg p-3">
-                              <p className="text-xs text-gray-600 mb-1">Columns</p>
+                              <p className="text-xs text-gray-600 mb-1">
+                                Columns
+                              </p>
                               <p className="text-lg font-bold text-gray-900">
                                 {dataset.column_count || "-"}
                               </p>
@@ -706,11 +749,14 @@ export default function DashboardPage() {
                           </div>
 
                           {/* Error Message */}
-                          {dataset.status === "error" && dataset.error_message && (
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                              <p className="text-xs text-red-700">{dataset.error_message}</p>
-                            </div>
-                          )}
+                          {dataset.status === "error" &&
+                            dataset.error_message && (
+                              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                                <p className="text-xs text-red-700">
+                                  {dataset.error_message}
+                                </p>
+                              </div>
+                            )}
 
                           {/* Actions */}
                           <div className="flex space-x-2">
@@ -718,7 +764,10 @@ export default function DashboardPage() {
                               <Button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleDatasetClick(dataset.id, dataset.status);
+                                  handleDatasetClick(
+                                    dataset.id,
+                                    dataset.status
+                                  );
                                 }}
                                 className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
                               >
@@ -732,7 +781,9 @@ export default function DashboardPage() {
                                 e.stopPropagation();
                                 handleDeleteDataset(dataset.id);
                               }}
-                              className={`${isReady ? "" : "flex-1"} border-red-200 hover:bg-red-50 hover:border-red-300 group/delete`}
+                              className={`${
+                                isReady ? "" : "flex-1"
+                              } border-red-200 hover:bg-red-50 hover:border-red-300 group/delete`}
                             >
                               <Trash2 className="w-4 h-4 text-red-600 group-hover/delete:scale-110 transition-transform" />
                             </Button>

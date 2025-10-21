@@ -21,8 +21,8 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    datasets = relationship("Dataset", back_populates="owner")
-    queries = relationship("Query", back_populates="user")
+    datasets = relationship("Dataset", back_populates="owner", cascade="all, delete-orphan")
+    queries = relationship("Query", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email={self.email}, username={self.username})>"

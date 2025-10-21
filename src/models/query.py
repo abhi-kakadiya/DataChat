@@ -34,6 +34,11 @@ class Query(Base):
 
     user = relationship("User", back_populates="queries")
     dataset = relationship("Dataset", back_populates="queries")
+    insights = relationship(
+        "Insight",
+        back_populates="query",
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Query(id={self.id}, dataset_id={self.dataset_id}, query_type={self.query_type})>"

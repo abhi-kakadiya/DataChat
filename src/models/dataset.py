@@ -33,7 +33,12 @@ class Dataset(Base):
     owner_id = Column(String, ForeignKey("users.id"), nullable=False)
 
     owner = relationship("User", back_populates="datasets")
-    queries = relationship("Query", back_populates="dataset")
+    queries = relationship("Query", back_populates="dataset", cascade="all, delete-orphan")
+    insights = relationship(
+        "Insight",
+        back_populates="dataset", 
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Dataset(id={self.id}, name={self.name}, status={self.status})>"
