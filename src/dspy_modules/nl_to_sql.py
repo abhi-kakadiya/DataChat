@@ -1,5 +1,3 @@
-"""DSPy module for natural language to SQL conversion with prompt engineering."""
-
 import dspy
 from typing import Optional
 import pandas as pd
@@ -72,19 +70,15 @@ class DataFrameQueryExecutor:
             Result DataFrame
         """
         try:
-            # Try pandas query method first
             if any(op in query.lower() for op in ['select', 'where', 'group by', 'order by']):
-                # Convert SQL-like to pandas
                 result = DataFrameQueryExecutor._sql_to_pandas(df, query)
             else:
-                # Direct pandas operation
                 result = eval(query, {"df": df, "pd": pd})
 
             if not isinstance(result, pd.DataFrame):
                 if isinstance(result, pd.Series):
                     result = result.to_frame()
                 else:
-                    # Scalar result
                     result = pd.DataFrame({"result": [result]})
 
             return result
@@ -99,13 +93,10 @@ class DataFrameQueryExecutor:
         """
         query_lower = sql_query.lower().strip()
 
-        # Handle SELECT COUNT(*)
         if "count(*)" in query_lower:
             return pd.DataFrame({"count": [len(df)]})
 
-        # Handle GROUP BY with aggregation
         if "group by" in query_lower:
-            # Simple pattern: SELECT col, AGG(col2) FROM table GROUP BY col
             parts = query_lower.split("group by")
             group_col = parts[1].strip().split()[0]
 
@@ -118,19 +109,16 @@ class DataFrameQueryExecutor:
             elif "count(" in parts[0]:
                 return df.groupby(group_col).size().reset_index(name='count')
 
-        # Handle ORDER BY
         if "order by" in query_lower:
             parts = query_lower.split("order by")
             col = parts[1].strip().split()[0]
             ascending = "desc" not in parts[1].lower()
             return df.sort_values(by=col, ascending=ascending)
 
-        # Handle WHERE
         if "where" in query_lower:
             condition = query_lower.split("where")[1].strip()
             return df.query(condition)
 
-        # Default: return original
         return df
 
 
@@ -149,20 +137,16 @@ def generate_sql_query(
     Returns:
         Dictionary with query details and results
     """
-    # Generate schema information
     schema_info = _generate_schema_info(df)
 
-    # Create or use provided module
     if nl_to_sql_module is None:
         nl_to_sql_module = NLToSQL()
 
-    # Generate SQL query
     prediction = nl_to_sql_module.forward(
         schema_info=schema_info,
         natural_language_query=natural_language_query
     )
 
-    # Execute query
     try:
         executor = DataFrameQueryExecutor()
         result_df = executor.execute_query(df, prediction.sql_query)
@@ -204,10 +188,8 @@ def _generate_schema_info(df: pd.DataFrame) -> str:
         non_null = df[col].count()
         null_pct = (len(df) - non_null) / len(df) * 100
 
-        # Get sample values
         sample_values = df[col].dropna().head(3).tolist()
 
-        # Statistics for numeric columns
         if pd.api.types.is_numeric_dtype(df[col]):
             stats = f"min={df[col].min():.2f}, max={df[col].max():.2f}, mean={df[col].mean():.2f}"
         else:

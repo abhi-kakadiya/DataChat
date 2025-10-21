@@ -6,27 +6,20 @@ from pydantic import BaseModel, Field
 
 
 class DatasetBase(BaseModel):
-    """Base dataset schema."""
-    
     name: str = Field(..., description="Dataset name")
     description: Optional[str] = Field(None, description="Dataset description")
 
 
 class DatasetCreate(DatasetBase):
-    """Dataset creation schema."""
     pass
 
 
 class DatasetUpdate(BaseModel):
-    """Dataset update schema."""
-    
     name: Optional[str] = Field(None, description="Dataset name")
     description: Optional[str] = Field(None, description="Dataset description")
 
 
 class DatasetInDBBase(DatasetBase):
-    """Base dataset in database schema."""
-    
     id: uuid.UUID = Field(..., description="Dataset ID")
     filename: str = Field(..., description="Original filename")
     file_path: str = Field(..., description="File path in storage")
@@ -46,18 +39,14 @@ class DatasetInDBBase(DatasetBase):
 
 
 class DatasetInDB(DatasetInDBBase):
-    """Dataset in database schema."""
     pass
 
 
 class Dataset(DatasetInDBBase):
-    """Dataset response schema."""
     pass
 
 
 class DatasetPreview(BaseModel):
-    """Dataset preview schema."""
-    
     id: uuid.UUID = Field(..., description="Dataset ID")
     name: str = Field(..., description="Dataset name")
     row_count: Optional[int] = Field(None, description="Number of rows")

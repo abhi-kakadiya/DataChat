@@ -44,31 +44,31 @@ services:
       timeout: 20s
       retries: 3
 
-  # api:
-  #   build: .
-  #   ports:
-  #     - "8000:8000"
-  #   environment:
-  #     - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/datachat
-  #     - DATABASE_URL_SYNC=postgresql://user:password@postgres:5432/datachat
-  #     - REDIS_URL=redis://redis:6379/0
-  #     - MINIO_ENDPOINT=minio:9000
-  #     - MINIO_ACCESS_KEY=minioadmin
-  #     - MINIO_SECRET_KEY=minioadmin
-  #     - MINIO_BUCKET_NAME=dspy-datasets
-  #     - MINIO_SECURE=false
-  #     - CELERY_BROKER_URL=redis://redis:6379/0
-  #     - CELERY_RESULT_BACKEND=redis://redis:6379/0
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #     minio:
-  #       condition: service_healthy
-  #   volumes:
-  #     - ./app:/app/app
-  #   command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/datachat
+      - DATABASE_URL_SYNC=postgresql://user:password@postgres:5432/datachat
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_BUCKET_NAME=dspy-datasets
+      - MINIO_SECURE=false
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
   celery-worker:
     build: .
@@ -91,8 +91,8 @@ services:
       minio:
         condition: service_healthy
     volumes:
-      - ./app:/app/app
-    command: celery -A app.core.celery worker --loglevel=info
+      - ./src:/app/src
+    command: celery -A src.core.celery:celery_app worker --loglevel=info
 
   celery-beat:
     build: .
@@ -115,11 +115,12 @@ services:
       minio:
         condition: service_healthy
     volumes:
-      - ./app:/app/app
-    command: celery -A app.core.celery beat --loglevel=info
+      - ./src:/app/src
+      - celerybeat_schedule:/app/celerybeat
+    command: celery -A src.core.celery:celery_app beat --loglevel=info --schedule=/app/celerybeat/celerybeat-schedule
 
 volumes:
   postgres_data:
   redis_data:
   minio_data:
-
+  celerybeat_schedule:

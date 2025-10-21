@@ -31,8 +31,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /install /usr/local
 COPY --chown=appuser:appuser . .
 
-RUN mkdir -p /app/cache /app/local_cache /app/logs \
-    && chown -R appuser:appuser /app/cache /app/local_cache /app/logs
+RUN mkdir -p /app/cache /app/local_cache /app/logs /app/celerybeat \
+    && chown -R appuser:appuser /app/cache /app/local_cache /app/logs /app/celerybeat
 
 USER appuser
 EXPOSE 8000

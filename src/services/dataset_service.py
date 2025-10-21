@@ -26,10 +26,7 @@ def sanitize_for_postgres_json(data: Any) -> Any:
 
 
 class DatasetService:
-    """Service for dataset operations."""
-
     def __init__(self):
-        """Initialize dataset service."""
         self.storage = storage_manager
 
     async def upload_dataset(

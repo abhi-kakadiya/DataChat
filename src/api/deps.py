@@ -1,9 +1,8 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 
-from src.core.database import get_async_session, get_sync_session
+from src.core.database import get_async_session
 from src.core.security import verify_token
 from src.models.user import User
 

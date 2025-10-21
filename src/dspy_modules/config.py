@@ -1,5 +1,3 @@
-"""DSPy configuration and LM setup."""
-
 import dspy
 from functools import lru_cache
 

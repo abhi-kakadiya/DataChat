@@ -1,5 +1,3 @@
-"""Background tasks for DSPy model optimization and analytics."""
-
 import logging
 from datetime import datetime, timedelta
 
@@ -13,7 +11,7 @@ from sqlalchemy import select, func
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(name="app.tasks.analytics.update_dspy_models")
+@celery_app.task(name="src.tasks.analytics_tasks.update_dspy_models")
 def update_dspy_models():
     """
     Update and optimize DSPy modules using collected user feedback.
@@ -30,7 +28,6 @@ def update_dspy_models():
     settings = get_settings()
 
     try:
-        # Collect training examples from successful queries with positive feedback
         training_queries = db.execute(
             select(Query).where(
                 Query.status == "success",
@@ -48,7 +45,6 @@ def update_dspy_models():
                 "examples_found": len(training_queries)
             }
 
-        # Collect dev examples (queries with any feedback)
         dev_queries = db.execute(
             select(Query).where(
                 Query.status == "success",
@@ -103,7 +99,7 @@ def update_dspy_models():
         db.close()
 
 
-@celery_app.task(name="app.tasks.analytics.generate_usage_stats")
+@celery_app.task(name="src.tasks.analytics_tasks.generate_usage_stats")
 def generate_usage_stats():
     """
     Generate usage statistics and analytics.
@@ -118,11 +114,9 @@ def generate_usage_stats():
 
     db = SessionLocal()
     try:
-        # Get date range (last 7 days)
-        end_date = datetime.utcnow()
+        end_date = datetime.now()
         start_date = end_date - timedelta(days=7)
 
-        # Count queries by day
         queries_per_day = {}
         for i in range(7):
             day = start_date + timedelta(days=i)
@@ -138,7 +132,6 @@ def generate_usage_stats():
 
             queries_per_day[day.strftime("%Y-%m-%d")] = count or 0
 
-        # Most queried datasets
         from sqlalchemy import desc
 
         popular_datasets = db.execute(
@@ -154,7 +147,6 @@ def generate_usage_stats():
             .limit(10)
         ).all()
 
-        # Overall metrics
         total_queries = db.execute(
             select(func.count(Query.id)).where(Query.created_at >= start_date)
         ).scalar() or 0

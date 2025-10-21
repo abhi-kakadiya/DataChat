@@ -24,7 +24,6 @@ class InsightService:
         self.dataset_service = DatasetService()
         self.insight_generator: Optional[InsightGenerator] = None
 
-        # Configure DSPy on initialization
         try:
             configure_dspy()
             self.insight_generator = InsightGenerator()
@@ -50,7 +49,6 @@ class InsightService:
             List of created Insight objects
         """
         try:
-            # Get dataset
             dataset = db.execute(
                 select(Dataset).where(Dataset.id == dataset_id)
             ).scalar_one_or_none()
@@ -62,10 +60,8 @@ class InsightService:
                 logger.warning(f"Dataset {dataset_id} is not ready (status: {dataset.status})")
                 return []
 
-            # Load dataset as DataFrame
             df = await self.dataset_service.get_dataset_data(dataset)
 
-            # Generate insights using DSPy
             insights_data = generate_insights(
                 df=df,
                 query_context="",
@@ -73,12 +69,10 @@ class InsightService:
                 max_insights=max_insights
             )
 
-            # Create insight records
             created_insights = []
             import uuid
 
             for insight_data in insights_data:
-                # Generate visualization config based on insight type
                 viz_config = self._generate_visualization_config(
                     insight_data["insight_type"],
                     insight_data.get("supporting_data", [])
@@ -124,7 +118,6 @@ class InsightService:
             List of created Insight objects
         """
         try:
-            # Get query with dataset
             query = db.execute(
                 select(Query).where(Query.id == query_id)
             ).scalar_one_or_none()
@@ -133,7 +126,6 @@ class InsightService:
                 logger.warning(f"Query {query_id} not found or not successful")
                 return []
 
-            # Get dataset
             dataset = db.execute(
                 select(Dataset).where(Dataset.id == query.dataset_id)
             ).scalar_one_or_none()
@@ -141,10 +133,8 @@ class InsightService:
             if not dataset or dataset.status != "ready":
                 return []
 
-            # Load dataset as DataFrame
             df = await self.dataset_service.get_dataset_data(dataset)
 
-            # Generate insights with query context
             query_context = f"User asked: '{query.natural_language_query}'. Query returned {query.row_count} rows."
 
             insights_data = generate_insights(
@@ -154,7 +144,6 @@ class InsightService:
                 max_insights=max_insights
             )
 
-            # Create insight records
             created_insights = []
             import uuid
 
@@ -329,7 +318,6 @@ class InsightService:
         Returns:
             Visualization config dict (Chart.js format)
         """
-        # Default config
         config = {
             "type": "bar",
             "data": {
@@ -348,7 +336,6 @@ class InsightService:
         if not supporting_data:
             return config
 
-        # Customize based on insight type
         if insight_type == "correlation":
             config["type"] = "scatter"
             if isinstance(supporting_data, list) and len(supporting_data) > 0:

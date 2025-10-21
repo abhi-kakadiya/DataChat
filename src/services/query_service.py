@@ -25,7 +25,6 @@ class QueryService:
         self.dataset_service = DatasetService()
         self.nl_to_sql_module: Optional[NLToSQL] = None
 
-        # Configure DSPy on initialization
         try:
             configure_dspy()
             self.nl_to_sql_module = NLToSQL()
@@ -50,7 +49,6 @@ class QueryService:
         Returns:
             Created Query object with results
         """
-        # Create query record
         import uuid
         query = Query(
             id=str(uuid.uuid4()),
@@ -64,7 +62,6 @@ class QueryService:
         db.refresh(query)
 
         try:
-            # Get dataset
             dataset = db.execute(
                 select(Dataset).where(Dataset.id == query_data.dataset_id)
             ).scalar_one_or_none()
@@ -75,10 +72,8 @@ class QueryService:
             if dataset.status != "ready":
                 raise ValueError(f"Dataset is not ready (status: {dataset.status})")
 
-            # Load dataset as DataFrame
             df = await self.dataset_service.get_dataset_data(dataset)
 
-            # Execute query using DSPy
             start_time = time.time()
             result = generate_sql_query(
                 df=df,
@@ -88,7 +83,6 @@ class QueryService:
             execution_time = time.time() - start_time
 
             if not result["success"]:
-                # Query generation/execution failed
                 query.status = "error"
                 query.error_message = result["error"]
                 query.generated_sql = result["sql_query"]
@@ -97,11 +91,9 @@ class QueryService:
                 db.refresh(query)
                 return query
 
-            # Process results
             result_df = result["result"]
             result_data = self._dataframe_to_json(result_df)
 
-            # Update query with results
             query.generated_sql = result["sql_query"]
             query.query_type = result["query_type"]
             query.result_data = sanitize_for_postgres_json(result_data)
@@ -176,7 +168,6 @@ class QueryService:
         Returns:
             List of Query objects
         """
-        # Verify dataset belongs to user
         dataset = db.execute(
             select(Dataset).where(
                 Dataset.id == dataset_id,
@@ -262,11 +253,9 @@ class QueryService:
         Returns:
             List of dictionaries
         """
-        # Limit result size
         max_rows = 1000
         if len(df) > max_rows:
             df = df.head(max_rows)
 
-        # Convert to dict, handling NaN/Inf values
         result = df.to_dict(orient="records")
         return result

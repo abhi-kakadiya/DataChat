@@ -1,11 +1,10 @@
-"""Query API endpoints for natural language data analysis."""
-
-from typing import Any, List
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from src.api.deps import get_sync_session, get_current_active_user
+from src.api.deps import get_current_active_user
+from src.core.database import get_sync_session 
 from src.models.user import User
 from src.schemas.query import (
     Query as QuerySchema,

@@ -1,5 +1,3 @@
-"""Background tasks for insight generation."""
-
 import logging
 from datetime import datetime, timedelta
 
@@ -12,7 +10,7 @@ from sqlalchemy import select
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(name="app.tasks.insights.generate_background_insights")
+@celery_app.task(name="src.tasks.insight_tasks.generate_background_insights")
 def generate_background_insights():
     """
     Background task to generate insights for datasets that don't have recent insights.
@@ -26,8 +24,6 @@ def generate_background_insights():
     try:
         insight_service = InsightService()
 
-        # Find datasets that need insights
-        # Criteria: ready status and either no insights or updated recently
         result = db.execute(
             select(Dataset).where(Dataset.status == "ready")
         )
@@ -38,7 +34,6 @@ def generate_background_insights():
 
         for dataset in datasets:
             try:
-                # Check if dataset has recent insights (within last 24 hours)
                 from src.models.insight import Insight
                 from sqlalchemy import func
 
@@ -48,12 +43,10 @@ def generate_background_insights():
                     .where(Insight.created_at >= datetime.utcnow() - timedelta(hours=24))
                 ).scalar()
 
-                # Skip if already has recent insights
                 if recent_insights_count and recent_insights_count > 0:
                     logger.info(f"Dataset {dataset.id} already has recent insights, skipping")
                     continue
 
-                # Generate insights asynchronously
                 import asyncio
                 insights = asyncio.run(
                     insight_service.generate_dataset_insights(

@@ -10,9 +10,10 @@ celery_app = Celery(
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
     include=[
-        "app.tasks.data_processing",
-        "app.tasks.analytics",
-        "app.tasks.insights"
+        "src.tasks.analytics_tasks",
+        "src.tasks.cleanup_tasks",
+        "src.tasks.dataset_tasks",
+        "src.tasks.insight_tasks"
     ]
 )
 
@@ -30,15 +31,15 @@ celery_app.conf.update(
     result_expires=3600,
     beat_schedule={
         "cleanup-old-files": {
-            "task": "app.tasks.data_processing.cleanup_old_files",
+            "task": "src.tasks.cleanup_tasks.cleanup_old_files",
             "schedule": 86400.0,
         },
         "generate-dataset-insights": {
-            "task": "app.tasks.insights.generate_background_insights",
+            "task": "src.tasks.insight_tasks.generate_background_insights",
             "schedule": 3600.0,
         },
         "update-dspy-models": {
-            "task": "app.tasks.analytics.update_dspy_models",
+            "task": "src.tasks.analytics_tasks.update_dspy_models",
             "schedule": 21600.0,
         },
     },
@@ -56,4 +57,3 @@ def debug_task(self):
     """Debug task to test Celery setup."""
     logger.info(f"Request: {self.request!r}")
     return "Celery is working!"
-
